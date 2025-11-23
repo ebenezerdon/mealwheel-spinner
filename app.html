@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MealWheel - Spinner</title>
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.10/tailwindcss.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Work+Sans:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/main.css">
+    <style type="text/tailwindcss" data-teda="tailwind-apply">
+        @layer components {
+            .btn-icon { @apply p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-colors; }
+            .input-base { @apply w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white transition-all text-sm; }
+            .card-panel { @apply bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden; }
+        }
+    </style>
+</head>
+<body class="font-body bg-slate-50 h-screen overflow-hidden text-slate-800 flex flex-col">
+    
+    <!-- Header -->
+    <header class="flex-none bg-white border-b border-slate-200 px-6 py-4 z-20 relative shadow-sm">
+        <div class="flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2 group">
+                <div class="bg-orange-100 text-orange-600 p-1.5 rounded-lg group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </div>
+                <span class="font-heading font-bold text-xl tracking-tight">MealWheel</span>
+            </a>
+            
+            <!-- Category Switcher -->
+            <div class="flex items-center gap-3">
+                <select id="category-select" class="input-base !py-1.5 !w-40 font-semibold text-slate-700 cursor-pointer">
+                    <!-- Populated via JS -->
+                </select>
+                <button id="btn-manage-categories" class="btn-icon" title="Manage Categories">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Split -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        
+        <!-- Left: Wheel Stage -->
+        <div class="w-full lg:w-3/5 relative bg-slate-50 flex flex-col items-center justify-center p-4 order-1 lg:order-1">
+            <!-- Canvas Container -->
+            <div class="relative w-full max-w-[500px] aspect-square drop-shadow-2xl">
+                <canvas id="wheel-canvas" class="w-full h-full object-contain"></canvas>
+                
+                <!-- Pointer -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-2 w-0 h-0 border-l-[15px] border-l-transparent border-r-[15px] border-r-transparent border-t-[25px] border-t-slate-800 z-10 filter drop-shadow-lg"></div>
+                
+                <!-- Center Spin Button (Overlay) -->
+                <button id="btn-spin" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white rounded-full shadow-xl flex items-center justify-center border-4 border-slate-100 hover:scale-105 active:scale-95 transition-transform z-20">
+                    <span class="font-heading font-black text-lg text-orange-600 uppercase tracking-widest">SPIN</span>
+                </button>
+            </div>
+
+            <!-- Result Display (Hidden initially) -->
+            <div id="result-overlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-40 hidden flex flex-col items-center justify-center p-8 opacity-0 transition-opacity duration-300">
+                <h2 class="text-white text-2xl font-light mb-2">The wheel has spoken!</h2>
+                <div id="result-text" class="text-5xl md:text-7xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-yellow-400 text-center drop-shadow-lg mb-8 transform scale-90 transition-transform duration-500"></div>
+                <div class="flex gap-4">
+                    <button id="btn-close-result" class="px-8 py-3 bg-white text-slate-900 font-bold rounded-full hover:bg-slate-100 transition shadow-lg">Accept Fate</button>
+                    <button id="btn-spin-again" class="px-8 py-3 bg-transparent border-2 border-white text-white font-bold rounded-full hover:bg-white/10 transition">Spin Again</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Controls (Scrollable) -->
+        <div class="w-full lg:w-2/5 bg-white border-l border-slate-200 flex flex-col h-full order-2 lg:order-2 z-10 shadow-xl">
+            
+            <!-- Tabs -->
+            <div class="flex border-b border-slate-200">
+                <button class="flex-1 py-4 font-bold text-sm text-orange-600 border-b-2 border-orange-600 active-tab" data-tab="items">Items & Weights</button>
+                <button class="flex-1 py-4 font-bold text-sm text-slate-500 hover:text-slate-700 border-b-2 border-transparent" data-tab="history">History</button>
+            </div>
+
+            <!-- Tab Content: Items -->
+            <div id="tab-items" class="flex-1 overflow-y-auto p-6 space-y-6 tab-content">
+                <!-- Add Form -->
+                <form id="form-add-item" class="flex gap-2 items-end">
+                    <div class="flex-1">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Meal Name</label>
+                        <input type="text" id="input-name" class="input-base" placeholder="e.g. Tacos" required maxlength="30">
+                    </div>
+                    <div class="w-20">
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Weight</label>
+                        <input type="number" id="input-weight" class="input-base text-center" value="1" min="1" max="10" required>
+                    </div>
+                    <button type="submit" class="bg-slate-900 text-white p-2.5 rounded-lg hover:bg-slate-800 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                </form>
+
+                <!-- List -->
+                <div class="space-y-3" id="items-list">
+                    <!-- Items injected here -->
+                </div>
+            </div>
+
+            <!-- Tab Content: History -->
+            <div id="tab-history" class="flex-1 overflow-y-auto p-6 hidden tab-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-900">Past Spins</h3>
+                    <button id="btn-clear-history" class="text-xs text-red-500 hover:text-red-700 font-semibold">Clear All</button>
+                </div>
+                <ul id="history-list" class="space-y-2">
+                    <!-- History items -->
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- Category Manager Modal -->
+    <div id="modal-category" class="fixed inset-0 bg-slate-900/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-heading font-bold text-lg">Manage Categories</h3>
+                <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex gap-2">
+                    <input type="text" id="input-new-category" class="input-base" placeholder="New Category Name (e.g. Breakfast)">
+                    <button id="btn-add-category" class="px-4 bg-orange-600 text-white rounded-lg font-bold hover:bg-orange-700">Add</button>
+                </div>
+                <div class="space-y-2 max-h-[200px] overflow-y-auto" id="category-list">
+                    <!-- Categories List -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/helpers.js"></script>
+    <script src="scripts/data.js"></script>
+    <script src="scripts/ui.js"></script>
+    <script src="scripts/main.js"></script>
+</body>
+</html>
